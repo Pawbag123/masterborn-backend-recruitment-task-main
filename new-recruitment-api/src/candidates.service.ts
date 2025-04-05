@@ -34,6 +34,51 @@ export class CandidatesService {
         previousPage: page - 1,
       };
       res.json(response);
+      console.log('Fetched candidates successfully');
+    } catch (error) {
+      console.error('Error fetching candidates:', error.message);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  async getByJobOfferId(req: Request, res: Response) {
+    const jobOfferId = parseInt(req.params.job_offer_id as string);
+    const page = parseInt(req.query.page as string) || 1;
+    const offset = (page - 1) * CANDIDATES_PER_PAGE;
+
+    if (isNaN(jobOfferId)) {
+      return res.status(400).json({ message: 'Invalid job offer ID' });
+    }
+
+    try {
+      const candidates = await this.db.all<Candidate[]>(
+        `SELECT c.* FROM candidate c
+            JOIN CandidateJobOffer co ON c.id = co.candidate_id
+            WHERE co.job_offer_id = ? LIMIT ? OFFSET ?`,
+        jobOfferId,
+        CANDIDATES_PER_PAGE,
+        offset
+      );
+
+      const totalCandidates = await this.db.get<{ count: number }>(
+        `SELECT COUNT(*) as count FROM candidate c
+            JOIN CandidateJobOffer co ON c.id = co.candidate_id
+            WHERE co.job_offer_id = ?`,
+        jobOfferId
+      );
+      const totalPages = Math.ceil(totalCandidates.count / CANDIDATES_PER_PAGE);
+
+      const response = {
+        candidates,
+        totalPages,
+        currentPage: page,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+        nextPage: page + 1,
+        previousPage: page - 1,
+      };
+      res.json(response);
+      console.log('Fetched candidates by job offer ID successfully');
     } catch (error) {
       console.error('Error fetching candidates:', error.message);
       res.status(500).json({ message: 'Internal server error' });
@@ -49,6 +94,7 @@ export class CandidatesService {
       await this.updateLegacyApi(candidate);
 
       await this.db.run('COMMIT');
+      console.log('Candidate created successfully');
     } catch (error) {
       await this.db.run('ROLLBACK');
       console.error(error);
@@ -81,7 +127,6 @@ export class CandidatesService {
       lastName: candidate.surname,
       email: candidate.email,
     };
-
     try {
       const response = await fetch(process.env.LEGACY_API_URL + '/candidates', {
         method: 'POST',
@@ -97,7 +142,7 @@ export class CandidatesService {
         console.error(
           `Failed to update legacy API. Status: ${response.status}, Message: ${errorMessage}`
         );
-        throw new Error('Failed to update legacy API');
+        throw new Error('Failed to update legacy API.');
       }
 
       console.log('Legacy API updated successfully');

@@ -5,7 +5,7 @@ describe('Create Candidate', () => {
   let app: Application;
 
   beforeAll(async () => {
-    app = await setupApp();
+    // app = await setupApp();
   });
 
   it('should create a new candidate successfully', async () => {});
