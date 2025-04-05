@@ -88,8 +88,8 @@ export class CandidatesService {
   async create(req: Request, res: Response) {
     const candidate: Candidate = req.body;
 
-    const transaction = await this.db.run('BEGIN TRANSACTION');
     try {
+      await this.db.run('BEGIN TRANSACTION');
       await this.postCandidateToDb(candidate);
       await this.updateLegacyApi(candidate);
 
@@ -142,13 +142,13 @@ export class CandidatesService {
         console.error(
           `Failed to update legacy API. Status: ${response.status}, Message: ${errorMessage}`
         );
-        throw new Error('Failed to update legacy API.');
+        throw new Error(`Failed to update legacy API: ${errorMessage}`);
       }
 
       console.log('Legacy API updated successfully');
     } catch (error) {
       console.error('Error updating legacy API:', error.message);
-      throw new Error('Error updating legacy API');
+      throw new Error(`Failed to update legacy API: ${error.message}`);
     }
   }
 

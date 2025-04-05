@@ -19,18 +19,18 @@ export class CandidatesController {
     );
   }
 
-  getAll(req: Request, res: Response) {
+  async getAll(req: Request, res: Response) {
     try {
-      this.candidatesService.getAll(req, res);
+      await this.candidatesService.getAll(req, res);
     } catch (error) {
       console.error('Error fetching candidates:', error.message);
       res.status(500).json({ message: 'Internal server error' });
     }
   }
 
-  getByJobOfferId(req: Request, res: Response) {
+  async getByJobOfferId(req: Request, res: Response) {
     try {
-      this.candidatesService.getByJobOfferId(req, res);
+      await this.candidatesService.getByJobOfferId(req, res);
     } catch (error) {
       console.error(
         'Error fetching candidates by job offer ID:',
